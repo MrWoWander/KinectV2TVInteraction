@@ -59,11 +59,6 @@
                 </Grid.ColumnDefinitions>
 
                 <Button x:Name="backButton" Height="119" Width="119" Visibility="Hidden" Grid.Column="0" Style="{StaticResource BackButtonStyle}" Click="GoBack" />
-
-                <StackPanel Orientation="Horizontal" Grid.Column="1" HorizontalAlignment="Center">
-                    <Image VerticalAlignment="Center" Source="Images/ITlogo.png" Stretch="UniformToFill" Margin="0 0 15 0" Width="100" Height="100"/>
-                    <TextBlock VerticalAlignment="Center" Foreground="{StaticResource BlackBrush}" FontSize="40" Text="Институт информационных технологий"/>
-                </StackPanel>
                 <Grid Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Bottom">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
