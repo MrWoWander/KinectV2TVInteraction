@@ -30,6 +30,8 @@ namespace Microsoft.Samples.Kinect.ControlsBasics
         public static List<string> history = new List<string>();
         public static ContentControl var_navigationRegion;
 
+        private BackgroundVideoPlaylist backgroundVideoPlaylist;
+
         private static bool needCheckTime;
         private bool adminMode = false;
 
@@ -67,6 +69,7 @@ namespace Microsoft.Samples.Kinect.ControlsBasics
             var_navigationRegion = navigationRegion;
 
             CreateData.GetAllVideos();
+            CreateData.GetBackgroundVideos();
             CreateData.GetNewsFromSite();
             CreateData.GetGames();
             CreateData.GetAllTimetable();
@@ -124,29 +127,37 @@ namespace Microsoft.Samples.Kinect.ControlsBasics
                 }
             };
 
-            if (SampleDataSource.GetItem("Video-Main") != null)
+            backgroundVideoPlaylist = new BackgroundVideoPlaylist();
+
+            if (backgroundVideoPlaylist.currentVideo != null)
             {
-                BackgroungVideo.Source = new Uri(SampleDataSource.GetItem("Video-Main").Parametrs[0].ToString());
+                BackgroungVideo.Source = backgroundVideoPlaylist.currentVideo;
                 BackgroungVideo.MediaEnded += BackgroungVideo_MediaEnded;
                 BackgroungVideo.Play();
             }
-            var eggVideoFile = $@"{AppDomain.CurrentDomain.BaseDirectory}\vgbtechs\kinectrequired.mp4";
-            if (File.Exists(eggVideoFile))
+
+            string GesturePath = $@"{AppDomain.CurrentDomain.BaseDirectory}\GesturesDatabase\KinectGesture.gbd";
+            if (File.Exists(GesturePath))
             {
-                EggVideo.Source = new Uri(eggVideoFile);
-                EggVideo.Visibility = Visibility.Collapsed;
-                EggVideo.MediaEnded += (s, e) =>
+                var eggVideoFile = $@"{AppDomain.CurrentDomain.BaseDirectory}\vgbtechs\kinectrequired.mp4";
+                if (File.Exists(eggVideoFile))
                 {
-                    BackgroungVideo.Volume = 1;
+                    EggVideo.Source = new Uri(eggVideoFile);
                     EggVideo.Visibility = Visibility.Collapsed;
-                };
-            }
-            int maxBodies = this.kinectRegion.KinectSensor.BodyFrameSource.BodyCount;
-            for (int i = 0; i < maxBodies; ++i)
-            {
-                GestureDetector detector = new GestureDetector(this.kinectRegion.KinectSensor);
-                detector.OnGestureFired += Detector_OnGestureFired;
-                this.gestureDetectorList.Add(detector);
+                    EggVideo.MediaEnded += (s, e) =>
+                    {
+                        BackgroungVideo.Volume = 1;
+                        EggVideo.Visibility = Visibility.Collapsed;
+                    };
+                }
+
+                int maxBodies = this.kinectRegion.KinectSensor.BodyFrameSource.BodyCount;
+                for (int i = 0; i < maxBodies; ++i)
+                {
+                    GestureDetector detector = new GestureDetector(this.kinectRegion.KinectSensor);
+                    detector.OnGestureFired += Detector_OnGestureFired;
+                    this.gestureDetectorList.Add(detector);
+                }
             }
         }
 
@@ -231,6 +242,7 @@ namespace Microsoft.Samples.Kinect.ControlsBasics
         private void BackgroungVideo_MediaEnded(object sender, RoutedEventArgs e)
         {
             BackgroungVideo.Stop();
+            BackgroungVideo.Source = backgroundVideoPlaylist.nextVideo();
             BackgroungVideo.Play();
         }
 
@@ -422,5 +434,41 @@ namespace Microsoft.Samples.Kinect.ControlsBasics
         {
             UIInvoked();
         }
+    }
+
+
+    public class BackgroundVideoPlaylist
+    {
+
+        private int currentIndex = 0;
+        private List<Uri> playlist = new List<Uri>();
+
+        public Uri currentVideo;
+
+        public BackgroundVideoPlaylist()
+        {
+            SampleDataCollection test = SampleDataSource.GetGroup("Video-Background");
+            foreach (var video in test.Items)
+            {
+                playlist.Add(new Uri(video.Parametrs[0].ToString()));
+            }
+            if (playlist.Count > 0)
+                currentVideo = playlist.First();
+        }
+
+
+
+        public Uri nextVideo()
+        {
+            if (playlist.Count > currentIndex + 1)
+                currentIndex++;
+            else
+                currentIndex = 0;
+
+            currentVideo = playlist[currentIndex];
+
+            return currentVideo;
+        }
+
     }
 }
